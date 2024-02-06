@@ -150,7 +150,7 @@ export default function Home() {
       const queries = messageHistory.filter((message) => {
         return message.payload.type === "Query";
       });
-      if (queries.length > 2) {
+      if (queries.length > 3) {
         setBlockUsage(true);
         openModal();
       }
