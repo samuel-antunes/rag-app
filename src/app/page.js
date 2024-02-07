@@ -13,11 +13,9 @@ import GPT from "./components/GPT";
 import Heading from "./components/Heading";
 import { v4 as uuidv4 } from "uuid";
 import Modal from "./components/Modal";
+import io from "socket.io-client";
 
-const SUPABASE_URL = "https://cpjirhyzwjiaafwuxfzk.supabase.co";
-const SUPABASE_ANON_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwamlyaHl6d2ppYWFmd3V4ZnprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDcyMDI5MjYsImV4cCI6MjAyMjc3ODkyNn0.3EyrCg_WZmSQuDANglVpuyQe_KP1eXdfVFZ-UNpyCTU";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const socket = io("https://rag-test-app-2-2235dc92aaf0.herokuapp.com/"); // Your server URL
 
 function generateRandomIdentifier() {
   return uuidv4();
@@ -68,12 +66,23 @@ MessageHandler.displayName = "message_handler";
 export default function Home() {
   const messagesEndRef = useRef(null);
   const [inputValue, setInputValue] = useState("");
-  const [messageHistory, setMessageHistory] = useState(null);
+  const [messageHistory, setMessageHistory] = useState([]);
   const [blockUsage, setBlockUsage] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+
+  const handleInserts = (payload) => {
+    console.log(payload);
+    setMessageHistory((prevMessages) => {
+      const lastMessage = prevMessages[prevMessages.length - 1];
+      const isSameType = lastMessage?.type === "GPT" && payload.type === "GPT";
+      return isSameType
+        ? [...prevMessages.slice(0, -1), payload]
+        : [...prevMessages, payload];
+    });
+  };
 
   useEffect(() => {
     setTimeout(() => {
@@ -82,76 +91,27 @@ export default function Home() {
   }, [messageHistory]);
 
   useEffect(() => {
-    const handleInserts = (payload) => {
-      console.log(payload);
-      setMessageHistory((prevMessages) => {
-        const lastMessage = prevMessages[prevMessages.length - 1];
-        const isSameType =
-          lastMessage?.payload?.type === "GPT" &&
-          payload.new.payload.type === "GPT";
-        return isSameType
-          ? [...prevMessages.slice(0, -1), payload.new]
-          : [...prevMessages, payload.new];
-      });
-    };
-    supabase
-      .channel("message_history")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "message_history" },
-        handleInserts
-      )
-      .subscribe();
-    supabase
-      .from("message_history")
-      .select("*")
-      .order("created_at", { ascending: true })
-      .then(({ data: message_history, error }) => {
-        if (error) console.log("error", error);
-        const userID = getUserID();
-        const filteredMessages = message_history.filter((message) => {
-          const payload = message.payload;
+    socket.on("emit-payload", (payload) => {
+      handleInserts(payload);
+    });
 
-          return payload.to === userID;
-        });
-        const queries = filteredMessages.filter((message) => {
-          return message.payload.type === "Query";
-        });
-
-        if (queries.length > 3) {
-          setBlockUsage(true);
-          openModal();
-        }
-        setMessageHistory(filteredMessages);
-      });
-
-    if (getUserID() === "") setUUIDCookie();
+    // Clean up on unmount
+    return () => socket.off("emit-payload");
   }, []);
   const sendMessage = async (messageToSend) => {
     const message = messageToSend || inputValue;
-    const userID = getUserID();
-    const body = JSON.stringify({ message: message, to: userID });
+
     setInputValue("");
     try {
-      const response = await fetch("/api/backend", {
-        method: "POST",
-        body,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const messagePayload = { type: "Query", content: message };
+      socket.emit("send-message", { message });
 
-      if (!response.ok) {
-        throw new Error("Network response was not ok: " + response.statusText);
-      }
-      console.log(response);
-      const data = await response.json();
-      console.log("data", data);
+      handleInserts(messagePayload);
 
       const queries = messageHistory.filter((message) => {
         return message.payload.type === "Query";
       });
-      if (queries.length > 20) {
+      if (queries.length > 3) {
         setBlockUsage(true);
         openModal();
       }
@@ -162,33 +122,36 @@ export default function Home() {
   return (
     <div className="flex text-[#ebecf5] p-8 md:p-0 ">
       <Modal isOpen={isModalOpen} onClose={closeModal}></Modal>
-      {messageHistory ? (
-        <div className="flex-grow flex-col justify-between mx-auto max-w-4xl ">
-          {messageHistory.map((message, index) => (
+      {/* {messageHistory ? ( */}
+      <div className="flex-grow flex-col justify-between mx-auto max-w-4xl ">
+        {messageHistory?.map((message, index) => {
+          console.log(message);
+          return (
             <>
               <MessageHandler
                 key={index}
-                message={message.payload}
+                message={message}
                 sendMessage={sendMessage}
                 blockUsage={blockUsage}
               />
             </>
-          ))}
-          <div className="">
-            <InputArea
-              inputValue={inputValue}
-              setInputValue={setInputValue}
-              sendMessage={sendMessage}
-              blockUsage={blockUsage}
-            />
-            <div ref={messagesEndRef} />
-          </div>
+          );
+        })}
+        <div className="">
+          <InputArea
+            inputValue={inputValue}
+            setInputValue={setInputValue}
+            sendMessage={sendMessage}
+            blockUsage={blockUsage}
+          />
+          <div ref={messagesEndRef} />
         </div>
-      ) : (
+      </div>
+      {/* ) : (
         <div className="container h-screen flex items-center align-center">
           <div className="bounce">Loading...</div>
         </div>
-      )}
+      )} */}
     </div>
   );
 }
