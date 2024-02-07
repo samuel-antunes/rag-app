@@ -83,6 +83,7 @@ export default function Home() {
 
   useEffect(() => {
     const handleInserts = (payload) => {
+      console.log(payload);
       setMessageHistory((prevMessages) => {
         const lastMessage = prevMessages[prevMessages.length - 1];
         const isSameType =
@@ -150,7 +151,7 @@ export default function Home() {
       const queries = messageHistory.filter((message) => {
         return message.payload.type === "Query";
       });
-      if (queries.length > 3) {
+      if (queries.length > 20) {
         setBlockUsage(true);
         openModal();
       }
