@@ -15,7 +15,9 @@ import { v4 as uuidv4 } from "uuid";
 import Modal from "./components/Modal";
 import io from "socket.io-client";
 
-const socket = io("https://rag-test-app-2-2235dc92aaf0.herokuapp.com/"); // Your server URL
+const socket = io("https://rag-test-app-2-2235dc92aaf0.herokuapp.com", {
+  withCredentials: true,
+});
 
 function generateRandomIdentifier() {
   return uuidv4();
