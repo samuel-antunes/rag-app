@@ -11,9 +11,9 @@ export default function Sources({ content }) {
         <GitBranch size={32} />
         <span className="px-2">Sources</span>
       </div>
-      <div className="flex flex-wrap">
+      <div className="flex flex-col md:flex-row">
         {content?.map(({ title, link }) => (
-          <a href={link} className="w-1/4 p-1" key={title + link}>
+          <a href={link} className="w-[100%] md:w-[50%] p-1" key={title + link}>
             <span className="flex flex-col items-center py-2 px-6 bg-[#4b4f70] rounded shadow hover:shadow-lg transition-shadow duration-300 tile-animation h-full">
               <span>{truncateText(title, 40)}</span>
               <span className="text-[#4c5ffc] text-clip">

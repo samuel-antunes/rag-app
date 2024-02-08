@@ -4,6 +4,7 @@ export default function InputArea({
   inputValue,
   setInputValue,
   sendMessage,
+  btnSendMessage,
   blockUsage,
 }) {
   return (
@@ -22,7 +23,7 @@ export default function InputArea({
       />
       {/* 20. Create send button */}
       <button
-        onClick={sendMessage}
+        onClick={btnSendMessage}
         className="bg-blue-500 text-white p-2 rounded-r-md hover:bg-blue-600"
       >
         <ArrowCircleRight size={25} />

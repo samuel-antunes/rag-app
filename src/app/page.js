@@ -101,6 +101,11 @@ export default function Home() {
     // Clean up on unmount
     return () => socket.off("emit-payload");
   }, []);
+
+  const btnSendMessage = async (event) => {
+    await sendMessage();
+  };
+
   const sendMessage = async (messageToSend) => {
     const message = messageToSend || inputValue;
 
@@ -123,10 +128,12 @@ export default function Home() {
     }
   };
   return (
-    <div className="flex text-[#ebecf5] p-8 md:p-0 ">
+    <div className="flex text-[#ebecf5] p-8 ">
       <Modal isOpen={isModalOpen} onClose={closeModal}></Modal>
       {/* {messageHistory ? ( */}
       <div className="flex-grow flex-col justify-between mx-auto max-w-4xl ">
+        <span className="text-3xl font-bold my-4 w-full flex">{`This is an AI RAG demo with web search results: (there is a limit to the number of queries)`}</span>
+
         {messageHistory?.map((message, index) => {
           // console.log(message);
           return (
@@ -145,6 +152,7 @@ export default function Home() {
             inputValue={inputValue}
             setInputValue={setInputValue}
             sendMessage={sendMessage}
+            btnSendMessage={btnSendMessage}
             blockUsage={blockUsage}
           />
           <div ref={messagesEndRef} />
