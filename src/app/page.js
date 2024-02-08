@@ -16,10 +16,8 @@ import Modal from "./components/Modal";
 import io from "socket.io-client";
 
 const socket = io("https://rag-test-app-2-2235dc92aaf0.herokuapp.com/", {
-  withCredentials: true,
-  extraHeaders: {
-    "my-custom-header": "abcd",
-  },
+  transports: ["websocket"],
+  upgrade: false,
 });
 
 function generateRandomIdentifier() {
@@ -79,7 +77,7 @@ export default function Home() {
   const closeModal = () => setIsModalOpen(false);
 
   const handleInserts = (payload) => {
-    console.log(payload);
+    // console.log(payload);
     setMessageHistory((prevMessages) => {
       const lastMessage = prevMessages[prevMessages.length - 1];
       const isSameType = lastMessage?.type === "GPT" && payload.type === "GPT";
@@ -114,7 +112,7 @@ export default function Home() {
       handleInserts(messagePayload);
 
       const queries = messageHistory.filter((message) => {
-        return message.payload.type === "Query";
+        return message.type === "Query";
       });
       if (queries.length > 3) {
         setBlockUsage(true);
@@ -130,7 +128,7 @@ export default function Home() {
       {/* {messageHistory ? ( */}
       <div className="flex-grow flex-col justify-between mx-auto max-w-4xl ">
         {messageHistory?.map((message, index) => {
-          console.log(message);
+          // console.log(message);
           return (
             <>
               <MessageHandler
