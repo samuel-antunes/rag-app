@@ -135,7 +135,9 @@ export default function Home() {
   }, []);
 
   const btnSendMessage = async (event) => {
-    await sendMessage();
+    if (inputValue != "") {
+      await sendMessage();
+    }
   };
 
   const sendMessage = async (messageToSend) => {
