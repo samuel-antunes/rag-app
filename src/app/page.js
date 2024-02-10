@@ -15,8 +15,8 @@ import { v4 as uuidv4 } from "uuid";
 import Modal from "./components/Modal";
 import io from "socket.io-client";
 const supabase = createClient(
-  process.env.SUPABASE_URL,
-  process.env.SUPABASE_API_KEY
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_API_KEY
 );
 //
 const socket = io("https://rag-test-app-2-2235dc92aaf0.herokuapp.com/", {
