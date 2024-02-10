@@ -14,7 +14,11 @@ import Heading from "./components/Heading";
 import { v4 as uuidv4 } from "uuid";
 import Modal from "./components/Modal";
 import io from "socket.io-client";
-
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_API_KEY
+);
+//
 const socket = io("https://rag-test-app-2-2235dc92aaf0.herokuapp.com/", {
   transports: ["websocket"],
   upgrade: false,
@@ -54,7 +58,9 @@ const MessageHandler = memo(({ message, sendMessage, blockUsage }) => {
     GPT,
     FollowUp,
   };
-  const Component = COMPONENT_MAP[message.type];
+  // if (!message || !message.type) console.log(message);
+  const Component =
+    message && message.type ? COMPONENT_MAP[message.type] : undefined;
   return Component ? (
     <Component
       content={message.content}
@@ -98,6 +104,32 @@ export default function Home() {
       handleInserts(payload);
     });
 
+    if (getUserID() == "") setUUIDCookie();
+
+    supabase
+      .from("message_history")
+      .select("*")
+      .order("created_at", { ascending: true })
+      .then(({ data: message_history, error }) => {
+        if (error) console.log(error, "err");
+        else {
+          let messagesPayload = [];
+          const userID = getUserID();
+          message_history?.map((message) => {
+            if (message.to == userID) messagesPayload.push(message.payload);
+          });
+          setMessageHistory(messagesPayload);
+          const queries = messageHistory.filter((message) => {
+            return message.type === "Query";
+          });
+          if (queries.length > 3) {
+            setBlockUsage(true);
+            openModal();
+          }
+          // console.log(messagesPayload);
+        }
+      });
+
     // Clean up on unmount
     return () => socket.off("emit-payload");
   }, []);
@@ -111,8 +143,17 @@ export default function Home() {
 
     setInputValue("");
     try {
-      const messagePayload = { type: "Query", content: message };
-      socket.emit("send-message", { message });
+      const userID = getUserID();
+      // console.log(userID);
+      const messagePayload = {
+        type: "Query",
+        content: message,
+        userID: userID,
+      };
+      socket.emit("send-message", {
+        messageData: { message: message },
+        userID: userID,
+      });
 
       handleInserts(messagePayload);
 
@@ -137,14 +178,12 @@ export default function Home() {
         {messageHistory?.map((message, index) => {
           // console.log(message);
           return (
-            <>
-              <MessageHandler
-                key={index}
-                message={message}
-                sendMessage={sendMessage}
-                blockUsage={blockUsage}
-              />
-            </>
+            <MessageHandler
+              key={index}
+              message={message}
+              sendMessage={sendMessage}
+              blockUsage={blockUsage}
+            />
           );
         })}
         <div className="">
