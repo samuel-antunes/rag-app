@@ -18,8 +18,8 @@ const supabase = createClient(
   "https://cpjirhyzwjiaafwuxfzk.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNwamlyaHl6d2ppYWFmd3V4ZnprIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwNzIwMjkyNiwiZXhwIjoyMDIyNzc4OTI2fQ.QmdMXfT-0Oi7pEHcdtlunTqOmBrT958mlNraW9RTCgM"
 );
-//
-const socket = io("https://rag-test-app-2-2235dc92aaf0.herokuapp.com/", {
+//https://rag-test-app-2-2235dc92aaf0.herokuapp.com/
+const socket = io("http://localhost:3005", {
   transports: ["websocket"],
   upgrade: false,
 });
@@ -84,6 +84,7 @@ export default function Home() {
 
   const handleInserts = (payload) => {
     // console.log(payload);
+    console.log(payload);
     setMessageHistory((prevMessages) => {
       const lastMessage = prevMessages[prevMessages.length - 1];
       const isSameType = lastMessage?.type === "GPT" && payload.type === "GPT";
@@ -101,6 +102,7 @@ export default function Home() {
 
   useEffect(() => {
     socket.on("emit-payload", (payload) => {
+      // console.log(payload);
       handleInserts(payload);
     });
 
@@ -165,7 +167,7 @@ export default function Home() {
         openModal();
       }
     } catch (err) {
-      console.log("err", err);
+      // console.log("err", err);
     }
   };
   return (
