@@ -104,25 +104,31 @@ export default function Home() {
       handleInserts(payload);
     });
 
-    if (getUserID() == "") setUUIDCookie();
+    const userID = getUserID();
+
+    if (userID == "") setUUIDCookie();
+
+    // Ensure this is the current user's ID
 
     supabase
       .from("message_history")
       .select("*")
+      .eq("to", userID) // Filter messages where the 'to' column matches the userID
       .order("created_at", { ascending: true })
       .then(({ data: message_history, error }) => {
-        if (error) console.log(error, "err");
-        else {
-          let messagesPayload = [];
-          const userID = getUserID();
-          message_history?.map((message) => {
-            if (message.to == userID) messagesPayload.push(message.payload);
-          });
+        if (error) {
+          console.log(error, "err");
+        } else {
+          console.log(message_history);
+          let messagesPayload =
+            message_history?.map((message) => message.payload) || [];
           setMessageHistory(messagesPayload);
-          const queries = messageHistory.filter((message) => {
-            return message.type === "Query";
-          });
-          if (queries.length > 3) {
+
+          // Assuming messageHistory is already updated
+          const queries = messagesPayload.filter(
+            (message) => message.type === "Query"
+          );
+          if (queries.length > 4) {
             setBlockUsage(true);
             openModal();
           }
@@ -158,11 +164,12 @@ export default function Home() {
       });
 
       handleInserts(messagePayload);
+      console.log(messageHistory);
 
       const queries = messageHistory.filter((message) => {
         return message.type === "Query";
       });
-      if (queries.length > 3) {
+      if (queries.length > 4) {
         setBlockUsage(true);
         openModal();
       }
