@@ -119,7 +119,7 @@ export default function Home() {
         if (error) {
           console.log(error, "err");
         } else {
-          console.log(message_history);
+          // console.log(message_history);
           let messagesPayload =
             message_history?.map((message) => message.payload) || [];
           setMessageHistory(messagesPayload);
@@ -164,7 +164,7 @@ export default function Home() {
       });
 
       handleInserts(messagePayload);
-      console.log(messageHistory);
+      // console.log(messageHistory);
 
       const queries = messageHistory.filter((message) => {
         return message.type === "Query";
